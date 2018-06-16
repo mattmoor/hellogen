@@ -24,6 +24,11 @@ import (
 	"github.com/mattmoor/hellogen/generators"
 )
 
+// Feed in the whole example directory and see what it logs.
+// go run main.go \
+//    -v 5 \
+//    --stderrthreshold INFO \
+//    -i $(echo $(go list ./examples/...) | sed 's/ /,/g')
 func main() {
 	arguments := args.Default()
 

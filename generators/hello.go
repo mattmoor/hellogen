@@ -37,7 +37,7 @@ const (
 	baseTagName = "hello:"
 
 	// Package tag for package-level configuration.
-	rootTagName = baseTagName + "package"
+	pkgTagName = baseTagName + "package"
 
 	// Function tag for function-level configuration.
 	funcTagName = baseTagName + "function"
@@ -71,6 +71,16 @@ func DefaultNameSystem() string {
 	return "public"
 }
 
+func extractTag(tag string, comments []string) {
+	tagVals := types.ExtractCommentTags("+", comments)[tag]
+	if len(tagVals) == 0 {
+		glog.V(5).Infof("No matching comment lines: %v", comments)
+		return
+	}
+
+	glog.V(5).Infof("Got %d tagVals: %+v", len(tagVals), tagVals)
+}
+
 func Packages(context *generator.Context, arguments *args.GeneratorArgs) generator.Packages {
 	boilerplate, err := arguments.LoadGoBoilerplate()
 	if err != nil {
@@ -89,15 +99,16 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 			continue
 		}
 
-		// TODO(mattmoor): Handle package-level comments via:
-		// something(pkg.Comments)
+		extractTag(pkgTagName, pkg.Comments)
 
 		for _, t := range pkg.Functions {
 			glog.V(5).Infof("  saw function %q", t.Name.String())
+			extractTag(funcTagName, t.CommentLines)
 		}
 
 		for _, t := range pkg.Types {
 			glog.V(5).Infof("  saw type %q", t.Name.String())
+			extractTag(typeTagName, t.CommentLines)
 		}
 
 		// TODO(mattmoor): Create generators to do things based on what we see.
