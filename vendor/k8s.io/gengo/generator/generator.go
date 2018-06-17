@@ -189,6 +189,7 @@ func NewContext(b *parser.Builder, nameSystems namer.NameSystems, canonicalOrder
 		Inputs:   b.FindPackages(),
 		FileTypes: map[string]FileType{
 			GolangFileType: NewGolangFile(),
+			YAMLFileType:   NewYAMLFile(),
 		},
 		builder: b,
 	}

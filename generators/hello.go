@@ -27,6 +27,7 @@ import (
 	"k8s.io/gengo/namer"
 	"k8s.io/gengo/types"
 
+	_ "github.com/ghodss/yaml"
 	"github.com/golang/glog"
 )
 
@@ -71,14 +72,15 @@ func DefaultNameSystem() string {
 	return "public"
 }
 
-func extractTag(tag string, comments []string) {
+func extractTags(tag string, comments []string) []string {
 	tagVals := types.ExtractCommentTags("+", comments)[tag]
 	if len(tagVals) == 0 {
 		glog.V(5).Infof("No matching comment lines: %v", comments)
-		return
+		return nil
 	}
 
 	glog.V(5).Infof("Got %d tagVals: %+v", len(tagVals), tagVals)
+	return tagVals
 }
 
 func Packages(context *generator.Context, arguments *args.GeneratorArgs) generator.Packages {
@@ -99,19 +101,36 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 			continue
 		}
 
-		extractTag(pkgTagName, pkg.Comments)
+		extractTags(pkgTagName, pkg.Comments)
 
 		for _, t := range pkg.Functions {
-			glog.V(5).Infof("  saw function %q", t.Name.String())
-			extractTag(funcTagName, t.CommentLines)
+			glog.V(5).Infof("  saw function %q (%+v)", t.Name.String(), t.Members)
+			extractTags(funcTagName, t.CommentLines)
+			fnt := t.Underlying // We're a DeclarationOf
+			if fnt.Signature != nil {
+				if fnt.Signature.Receiver != nil {
+					glog.V(5).Infof("  receiver:", fnt.Signature.Receiver.Name.String())
+				}
+				glog.V(5).Info("  args:")
+				for _, p := range fnt.Signature.Parameters {
+					// This will be the types of the parameters,
+					// it is unclear whether it is possible to access
+					// the names of the formals.
+					glog.V(5).Infof("  - %v", p.Name.String())
+				}
+				glog.V(5).Info("  results:")
+				for _, res := range fnt.Signature.Results {
+					// Same as Parameters, but named results are less typical.
+					glog.V(5).Infof("  - %v", res.Name.String())
+				}
+			}
 		}
 
 		for _, t := range pkg.Types {
 			glog.V(5).Infof("  saw type %q", t.Name.String())
-			extractTag(typeTagName, t.CommentLines)
+			extractTags(typeTagName, t.CommentLines)
 		}
 
-		// TODO(mattmoor): Create generators to do things based on what we see.
 		packages = append(packages,
 			&generator.DefaultPackage{
 				PackageName: strings.Split(filepath.Base(pkg.Path), ".")[0],
@@ -119,7 +138,34 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 				HeaderText:  header,
 				GeneratorFunc: func(c *generator.Context) (generators []generator.Generator) {
 					return []generator.Generator{
-						// TODO(mattmoor): Set up the generator func.
+						generator.DefaultGen{
+							OptionalName: arguments.OutputFileBaseName,
+							OptionalBody: []byte(`var this = "is a body"`),
+						},
+					}
+				},
+				FilterFunc: func(c *generator.Context, t *types.Type) bool {
+					return t.Name.Package == pkg.Path
+				},
+			})
+
+		packages = append(packages,
+			&generator.DefaultPackage{
+				PackageName: strings.Split(filepath.Base(pkg.Path), ".")[0],
+				PackagePath: pkg.Path,
+				HeaderText:  header,
+				GeneratorFunc: func(c *generator.Context) (generators []generator.Generator) {
+					return []generator.Generator{
+						// TODO(mattmoor): This is a patch on top of k8s.io/gengo (in vendor),
+						// since it wasn't clear how to easily hook in new filetypes otherwise.
+						generator.YAMLGen{
+							OptionalName: arguments.OutputFileBaseName,
+							Objects: []interface{}{
+								map[string]string{
+									"foo": "bar",
+								},
+							},
+						},
 					}
 				},
 				FilterFunc: func(c *generator.Context, t *types.Type) bool {

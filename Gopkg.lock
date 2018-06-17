@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/ghodss/yaml"
+  packages = ["."]
+  revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/golang/glog"
   packages = ["."]
@@ -24,6 +30,12 @@
   revision = "465e6f399236d0ea2466584539d4eab4d3d83720"
 
 [[projects]]
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
+
+[[projects]]
   branch = "master"
   name = "k8s.io/gengo"
   packages = [
@@ -39,6 +51,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9d241d1aedfb3c4ec08d5348bf05f0ef767239d0f7fcc5d103b988d6b3e60500"
+  inputs-digest = "b567b115714cf870c72123cbe30f2900b23fc851f15be6c69bb72ce08419a3be"
   solver-name = "gps-cdcl"
   solver-version = 1

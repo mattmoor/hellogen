@@ -5,6 +5,6 @@ import (
 )
 
 // +hello:function=a long value
-func Bar(f Foo) (string, error) {
+func Bar(f foo.Foo) (string, error) {
 	return "", nil
 }
